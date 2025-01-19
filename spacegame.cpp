@@ -19,9 +19,6 @@ struct GameData {
 };
 
 // Funkcja zapisująca stan gry do pliku JSON
-// Parametry:
-// - filename: nazwa pliku do zapisu
-// - gameDataList: lista danych gry do zapisania
 void saveScoreToJson(const std::string& filename, const std::vector<GameData>& gameDataList) {
     nlohmann::json jsonData;
     std::ifstream inputFile(filename);
@@ -29,12 +26,12 @@ void saveScoreToJson(const std::string& filename, const std::vector<GameData>& g
         try {
             inputFile >> jsonData;
         } catch (const std::exception& e) {
-            std::cerr << "Błąd podczas wczytywania istniejących danych: " << e.what() << std::endl;
+            std::cerr << "Błąd " << e.what() << std::endl;
         }
         inputFile.close();
     }
 
-    // Konwersja danych gry do formatu JSON
+    // Konwersja danych gry do JSON
     for (const auto& gameData : gameDataList) {
         nlohmann::json entry;
         entry["position"] = {gameData.position.x, gameData.position.y};
@@ -53,12 +50,7 @@ void saveScoreToJson(const std::string& filename, const std::vector<GameData>& g
     outputFile.close();
 }
 
-// Funkcja wczytująca stan gry z pliku JSON
-// Parametry:
-// - filename: nazwa pliku do odczytu
-// - gameDataList: lista na wczytane dane
-// - ufoPosition: pozycja gracza do zaktualizowania
-// - score: wynik do zaktualizowania
+// Wczytuje stan gry z pliku JSON
 void loadScoreFromJson(const std::string& filename, std::vector<GameData>& gameDataList, sf::Vector2f& ufoPosition, int& score) {
     std::ifstream inputFile(filename);
     if (!inputFile.is_open()) {
@@ -66,7 +58,7 @@ void loadScoreFromJson(const std::string& filename, std::vector<GameData>& gameD
         return;
     }
 
-    // Wczytanie i parsowanie JSON
+    // Wczytanie JSON
     nlohmann::json jsonData;
     try {
         inputFile >> jsonData;
@@ -88,7 +80,7 @@ void loadScoreFromJson(const std::string& filename, std::vector<GameData>& gameD
             gameDataList.push_back(gameData);
         }
 
-        // Aktualizacja stanu gry ostatnim zapisem
+        // Aktualizacja stanu gry 
         if (!gameDataList.empty()) {
             const auto& lastGameData = gameDataList.back();
             ufoPosition = lastGameData.position;
@@ -119,7 +111,7 @@ private:
     void init() {
         // Ładowanie czcionki
         if (!font.loadFromFile("arial.ttf")) {
-            throw std::runtime_error("Nie można załadować pliku czcionki");
+            throw std::runtime_error("Bląd");
         }
 
         // Konfiguracja tekstu w prawym górnym rogu
@@ -150,7 +142,7 @@ private:
 
         // Ładowanie i konfiguracja tła
         if (!backgroundTexture.loadFromFile("space.jpg")) {
-            throw std::runtime_error("Nie można załadować pliku tekstury tła");
+            throw std::runtime_error("Błąd");
         }
 
         backgroundSprite.setTexture(backgroundTexture);
@@ -177,7 +169,7 @@ private:
         centerText(pauseText);
     }
 
-    // Wycentrowanie tekstu na ekranie
+    // centrowanie tekstu na ekranie
     void centerText(sf::Text &text) {
         sf::FloatRect textBounds = text.getLocalBounds();
         text.setPosition((size.x - textBounds.width) / 2, (size.y - textBounds.height) / 2);
@@ -323,16 +315,11 @@ private:
 
 public:
     // Konstruktor inicjalizujący przeszkodę
-    // Parametry:
-    // - x: początkowa pozycja x przeszkody
-    // - y: początkowa pozycja y przeszkody
-    // - obstacleSpeed: prędkość poruszania się przeszkody (domyślnie 150.f pikseli/s)
     Obstacle(float x, float y, float obstacleSpeed = 150.f) : speed(obstacleSpeed) {
         // Ładowanie tekstury tylko przy pierwszym utworzeniu obiektu
-        // Sprawdzanie czy tekstura już istnieje poprzez sprawdzenie jej wymiarów
         if (texture.getSize().x == 0 && texture.getSize().y == 0) {
             if (!texture.loadFromFile("planeta.png")) {
-                std::cerr << "Nie udało się załadować tekstury!" << std::endl;
+                std::cerr << "Błąd" << std::endl;
             }
         }
         
@@ -341,15 +328,11 @@ public:
     }
 
     // Aktualizacja pozycji przeszkody w każdej klatce gry
-    // Parametry:
-    // - deltaTime: czas od ostatniej aktualizacji (w sekundach)
-    // - bounds: granice obszaru gry
     void update(float deltaTime, const sf::FloatRect &bounds) {
         sf::Vector2f position = sprite.getPosition();
         position.x -= speed * deltaTime;  // Przesunięcie przeszkody w lewo
 
         // Reset pozycji przeszkody gdy wyjdzie poza lewą krawędź ekranu
-        // Przeszkoda pojawia się ponownie po prawej stronie na losowej wysokości
         if (position.x + sprite.getGlobalBounds().width < bounds.left) {
             position.x = bounds.left + bounds.width;
             position.y = bounds.top + static_cast<float>(rand() % static_cast<int>(bounds.height - sprite.getGlobalBounds().height));
@@ -359,15 +342,11 @@ public:
     }
 
     // Rysowanie przeszkody w oknie gry
-    // Parametry:
-    // - window: referencja do okna gry, w którym ma być narysowana przeszkoda
     void draw(sf::RenderWindow &window) const {
         window.draw(sprite);
     }
 
     // Zwraca prostokąt ograniczający przeszkodę
-    // Używany do sprawdzania kolizji z innymi obiektami
-    // Zwraca: sf::FloatRect reprezentujący granice przeszkody
     sf::FloatRect getBounds() const {
         return sprite.getGlobalBounds();
     }
@@ -382,10 +361,6 @@ private:
 
 public:
     // Konstruktor inicjalizujący nagrodę
-    // Parametry:
-    // - x: początkowa pozycja x nagrody
-    // - y: początkowa pozycja y nagrody
-    // - rewardSpeed: prędkość poruszania się nagrody (domyślnie 100.f pikseli/s)
     Reward(float x, float y, float rewardSpeed = 100.f) : speed(rewardSpeed) {
         // Ładowanie tekstury tylko przy pierwszym utworzeniu obiektu
         if (texture.getSize().x == 0 && texture.getSize().y == 0) {
@@ -399,15 +374,11 @@ public:
     }
 
     // Aktualizacja pozycji nagrody w każdej klatce gry
-    // Parametry:
-    // - deltaTime: czas od ostatniej aktualizacji (w sekundach)
-    // - bounds: granice obszaru gry
     void update(float deltaTime, const sf::FloatRect &bounds) {
         sf::Vector2f position = sprite.getPosition();
         position.x -= speed * deltaTime;  // Przesunięcie nagrody w lewo
 
         // Reset pozycji nagrody gdy wyjdzie poza lewą krawędź ekranu
-        // Nagroda pojawia się ponownie po prawej stronie na losowej wysokości
         if (position.x + sprite.getGlobalBounds().width < bounds.left) {
             position.x = bounds.left + bounds.width;
             position.y = bounds.top + static_cast<float>(rand() % static_cast<int>(bounds.height - sprite.getGlobalBounds().height));
@@ -417,15 +388,11 @@ public:
     }
 
     // Rysowanie nagrody w oknie gry
-    // Parametry:
-    // - window: referencja do okna gry, w którym ma być narysowana nagroda
     void draw(sf::RenderWindow &window) const {
         window.draw(sprite);
     }
 
     // Zwraca prostokąt ograniczający nagrodę
-    // Używany do sprawdzania kolizji z innymi obiektami
-    // Zwraca: sf::FloatRect reprezentujący granice nagrody
     sf::FloatRect getBounds() const {
         return sprite.getGlobalBounds();
     }
@@ -440,10 +407,6 @@ struct Level {
     int numObstacles;          // Liczba przeszkód na poziomie
 
     // Konstruktor poziomu inicjalizujący wszystkie parametry
-    // Parametry:
-    // - bgColor: kolor tła poziomu
-    // - speed: prędkość przeszkód
-    // - obstacles: liczba przeszkód
     Level(sf::Color bgColor, float speed, int obstacles)
         : backgroundColor(bgColor), obstacleSpeed(speed), numObstacles(obstacles) {}
 };
@@ -492,9 +455,6 @@ private:
     }
 
     // Inicjalizacja ekranu menu
-    // Konfiguruje tekst, czcionkę i pozycję dla ekranu "Los"
-    // Parametry:
-    // - windowSize: rozmiar okna gry do wycentrowania tekstu
     void initLosScreen(const sf::Vector2f &windowSize) {
         // Ładowanie czcionki
         if (!font.loadFromFile("arial.ttf")) {
@@ -517,8 +477,6 @@ private:
 
 public:
     // Konstruktor inicjalizujący menedżera ekranów
-    // Parametry:
-    // - windowSize: rozmiar okna gry
     ScreenManager(const sf::Vector2f &windowSize)
         : currentScreen(ScreenType::Game) {
         initEndeScreen(windowSize);
@@ -526,25 +484,16 @@ public:
     }
 
     // Przełączanie między różnymi ekranami
-    // Parametry:
-    // - screen: typ ekranu, na który należy przełączyć
     void switchTo(ScreenType screen) {
         currentScreen = screen;
     }
 
     // Pobranie aktualnie wyświetlanego ekranu
-    // Zwraca: aktualny typ ekranu
     ScreenType getCurrentScreen() const {
         return currentScreen;
     }
 
     // Rysowanie odpowiedniego ekranu w zależności od aktualnego stanu
-    // Parametry:
-    // - window: okno gry do rysowania
-    // - interfejs: interfejs gry do wyświetlenia
-    // - ufo: obiekt gracza do wyświetlenia
-    // - obstacles: wektor przeszkód do wyświetlenia
-    // - rewards: wektor nagród do wyświetlenia
     void draw(sf::RenderWindow &window, Interfejs &interfejs, Ufo &ufo, const std::vector<Obstacle> &obstacles, const std::vector<Reward> &rewards) {
         if (currentScreen == ScreenType::Game) {
             // Rysowanie ekranu gry ze wszystkimi elementami
@@ -603,14 +552,14 @@ int main() {
 
         // Definicja poziomów gry z różnymi właściwościami
         std::vector<Level> levels = {
-            {sf::Color::Black, 100.f, 5},    // Poziom 1: Czarne tło, wolna prędkość, mało przeszkód
-            {sf::Color::Cyan, 150.f, 8},     // Poziom 2: Cyjanowe tło, średnia prędkość, więcej przeszkód
-            {sf::Color::Magenta, 215.f, 10}, // Poziom 3: Magenta tło, duża prędkość, dużo przeszkód
+            {sf::Color::Black, 100.f, 5},    // Poziom 1: Czarne tło,prędkość1 , mało przeszkód
+            {sf::Color::Cyan, 150.f, 8},     // Poziom 2: Cyjanowe tło, prędkość2 , więcej przeszkód
+            {sf::Color::Magenta, 215.f, 10}, // Poziom 3: Magenta tło, prędkość,3  dużo przeszkód
         };
         int currentLevelIndex = 0;
         Level currentLevel = levels[currentLevelIndex];
 
-        // Funkcja lambda do inicjalizacji przeszkód dla aktualnego poziomu
+        //inicjalizacja przeszkód dla aktualnego poziomu
         std::vector<Obstacle> obstacles;
         auto initializeObstacles = [&]() {
             obstacles.clear();
@@ -622,7 +571,7 @@ int main() {
         };
         initializeObstacles();
 
-        // Funkcja lambda do inicjalizacji nagród
+        //inicjalizacja nagród
         std::vector<Reward> rewards;
         auto initializeRewards = [&]() {
             rewards.clear();
@@ -651,7 +600,7 @@ int main() {
 
                 // Obsługa wejścia z klawiatury
                 if (event.type == sf::Event::KeyPressed) {
-                    // Klawisz M - Przełączanie między ekranem Los a Game
+                    
                     if (event.key.code == sf::Keyboard::M) {
                         if (screenManager.getCurrentScreen() == ScreenManager::ScreenType::Los) {
                             screenManager.switchTo(ScreenManager::ScreenType::Game);
@@ -659,7 +608,7 @@ int main() {
                             screenManager.switchTo(ScreenManager::ScreenType::Los);
                         }
                     }
-                    // Klawisz G - Restart gry z ekranu Ende
+                    
                     else if (event.key.code == sf::Keyboard::G) {
                         if (screenManager.getCurrentScreen() == ScreenManager::ScreenType::Ende) {
                             isGameOver = false;
@@ -677,7 +626,7 @@ int main() {
                             screenManager.switchTo(ScreenManager::ScreenType::Game);
                         }
                     }
-                    // Klawisz Escape - Obsługa pauzy i wyjścia z gry
+                    
                     else if (event.key.code == sf::Keyboard::Escape) {
                         if (interfejs.isPauseVisible()) {
                             // Zapisywanie danych gry przed wyjściem
@@ -701,17 +650,17 @@ int main() {
                             interfejs.togglePause();
                         }
                     }
-                    // Klawisz Shift - Wznowienie gry z pauzy
+                    
                     else if (event.key.code == sf::Keyboard::LShift || event.key.code == sf::Keyboard::RShift) {
                         if (interfejs.isPauseVisible()) {
                             interfejs.resumeGame();
                         }
                     }
-                    // Klawisz F1 - Przełączanie ekranu pomocy
+                    
                     else if (event.key.code == sf::Keyboard::F1) {
                         interfejs.toggleHelp();
                     }
-                    // Klawisz Enter - Zmiana poziomu
+                    
                     else if (event.key.code == sf::Keyboard::Return) {
                         currentLevelIndex = (currentLevelIndex + 1) % levels.size();
                         currentLevel = levels[currentLevelIndex];
@@ -719,7 +668,7 @@ int main() {
                         initializeRewards();
                         std::cout << "Poziom zmieniony na: " << currentLevelIndex + 1 << std::endl;
                     }
-                    // Klawisz F - Wczytanie danych gry
+                    
                     else if (event.key.code == sf::Keyboard::F) {
                         sf::Vector2f ufoPosition = ufo.getPosition();
                         loadScoreFromJson("sscore.json", gameDataList, ufoPosition, score);
@@ -727,7 +676,7 @@ int main() {
                         interfejs.updateTexts(ufo.getPosition(), score);
                         std::cout << "Dane gry zostały ponownie załadowane." << std::endl;
                     }
-                    // Klawisz S - Zapisanie danych gry
+                    
                     else if (event.key.code == sf::Keyboard::S) {
                         GameData newGameData;
                         newGameData.position = ufo.getPosition();
