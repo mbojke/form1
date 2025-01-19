@@ -1,0 +1,1 @@
+saveScoreToJson("sscore.json", gameDataList);
